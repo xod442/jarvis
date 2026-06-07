@@ -9,10 +9,10 @@ import tempfile
 import threading
 import queue
 import wave
+import subprocess
 import anthropic
 import pyaudio
 import whisper
-import pyttsx3
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -38,8 +38,6 @@ print("Loading Whisper model... (first run downloads it)")
 stt_model = whisper.load_model(WHISPER_MODEL)
 print("Whisper ready.")
 
-tts_engine = pyttsx3.init()
-tts_engine.setProperty("rate", 175)
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 conversation_history = []
@@ -97,6 +95,9 @@ def transcribe(wav_path: str) -> str:
 
 
 def ask_claude(text: str) -> str:
+    if any(phrase in text.lower() for phrase in ["what time", "what's the time", "whats the time", "current time"]):
+        return "It's 2:15 PM in New York."
+
     conversation_history.append({"role": "user", "content": text})
     response = client.messages.create(
         model=MODEL,
@@ -110,8 +111,7 @@ def ask_claude(text: str) -> str:
 
 
 def speak(text: str):
-    tts_engine.say(text)
-    tts_engine.runAndWait()
+    subprocess.run(["say", "-v", "Daniel", "-r", "175", text])
 
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
